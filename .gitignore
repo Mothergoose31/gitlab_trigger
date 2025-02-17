@@ -21,3 +21,5 @@ gitlab_pipeline-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+/devops_script/

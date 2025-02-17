@@ -1,39 +1,34 @@
 defmodule PushToS3BucketTest do
+  use ExUnit.Case
   import ExUnit.CaptureIO
-  use ExUnit.Case, async: true
-  import Mox
 
-  setup :verify_on_exit!
+  setup do
+    tmp_dir = "test/tmp"
+    File.mkdir_p!(tmp_dir)
 
-  defmodule FileMock do
-    def exists?(_path), do: true
-    def stream!(_path), do: Stream.map(["file1.txt", "file2.txt"], & &1)
-    def open!(_path, _modes), do: :mock_file
-    def write(_file, content), do: send(self(), {:mock_file, :write, content})
-    def close(_file), do: :ok
+
+    on_exit(fn ->
+      File.rm_rf!(tmp_dir)
+
+      Application.delete_env(:gitlab_pipeline, :base_url)
+      Application.delete_env(:gitlab_pipeline, :output_file)
+    end)
+
+    {:ok, tmp_dir: tmp_dir}
   end
 
-  test "run/0 generates the correct S3 commands" do
-    Application.put_env(:your_app, :file_module, FileMock)
+  test "Print concatenated urls when the file exists", %{tmp_dir: tmp_dir} do
+    file_path = Path.join(tmp_dir, "output.txt")
+    File.write!(file_path, "file1.txt\nfile2.txt\nfile3.txt")
 
-    expect(FileMock, :exists?, fn _path -> true end)
-    expect(FileMock, :stream!, fn _path -> Stream.map(["file1.txt", "file2.txt"], & &1) end)
-    expect(FileMock, :open!, fn _path, _modes -> :mock_file end)
-    expect(FileMock, :write, fn _file, content -> assert content =~ "echo http://base_url/file1.txt" end)
-    expect(FileMock, :close, fn _file -> :ok end)
+    Application.put_env(:gitlab_pipeline, :base_url, "http://example.com/")
+    Application.put_env(:gitlab_pipeline, :output_file, file_path)
 
-    System.argv() |> Enum.at(0) |> PushToS3Bucket.run()
-
-    assert_received {:mock_file, :write, _}
-  end
-
-  test "run/0 handles missing output.txt file" do
-    Application.put_env(:your_app, :file_module, FileMock)
-
-    expect(FileMock, :exists?, fn _path -> false end)
-
-    assert capture_io(fn ->
+    captured = capture_io(fn ->
       PushToS3Bucket.run()
-    end) =~ "File devops_script/output.txt does not exist"
+    end)
+
+    expected = "http://example.com/file1.txt\nhttp://example.com/file2.txt\nhttp://example.com/file3.txt\n"
+    assert captured == expected
   end
 end

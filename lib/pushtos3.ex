@@ -1,26 +1,18 @@
 defmodule PushToS3Bucket do
   def run do
-    base_url = System.argv() |> Enum.at(0)
+    base_url = Application.get_env(:gitlab_pipeline, :base_url, System.argv() |> Enum.at(0))
+    output_file = Application.get_env(:gitlab_pipeline, :output_file, "devops_script/output.txt")
 
-    if File.exists?("devops_script/output.txt") do
+    if File.exists?(output_file) do
       artifact_urls =
-        File.stream!("devops_script/output.txt")
+        File.stream!(output_file)
         |> Stream.map(&String.trim/1)
         |> Enum.map(&(base_url <> &1))
 
-      push_to_s3_bucket_file = File.open!("devops_script/push_to_s3_bucket.sh", [:write])
-
       artifact_urls
-      |> Enum.each(fn url ->
-        s3_command = """
-        echo #{url} >> devops_script/push_to_s3_bucket.txt
-        """
-        IO.write(push_to_s3_bucket_file, s3_command <> "\n")
-      end)
-
-      File.close(push_to_s3_bucket_file)
+      |> Enum.each(&IO.puts/1)
     else
-      IO.puts("File devops_script/output.txt does not exist")
+      IO.puts("File #{output_file} does not exist")
     end
   end
 end

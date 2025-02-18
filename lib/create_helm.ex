@@ -3,8 +3,9 @@ defmodule CreateHelm do
   CreateHelm module for creating helm chart.
   """
 
-  def create_helm_packages(path \\ File.cwd!()) do
+  @system_module Application.compile_env(:gitlab_pipeline, :system_module, System)
 
+  def create_helm_packages(path \\ File.cwd!()) do
     path
     |> File.ls!()
     |> Enum.each(fn item ->
@@ -14,7 +15,7 @@ defmodule CreateHelm do
         create_helm_packages(full_path)
       else
         if String.contains?(item, "Chart") do
-          System.cmd("helm", ["package", "."], cd: full_path)
+          @system_module.cmd("helm", ["package", "."], cd: full_path)
         end
       end
     end)

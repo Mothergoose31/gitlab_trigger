@@ -29,7 +29,6 @@ defmodule ListDocker do
       print: true
     ]
 
-    # Override defaults with any options passed to the function
     options = Keyword.merge(default_options, options)
 
     docker_urls =
@@ -55,7 +54,7 @@ defmodule ListDocker do
          -F "ref=#{options[:ref]}" \\
          -F "variables[RELEASE]=#{options[:release]}" \\
          -F "variables[ARTIFACT_LIST]=#{docker_final_url_list}" \\
-         #{options[:gitlab_url]}/api/v4/projects/#{options[:project_id]}/trigger/pipeline
+         #{options[:gitlab_url]}/api/projects/#{options[:project_id]}/trigger/pipeline
     """
 
     if options[:print], do: IO.puts(curl_cmd_string)

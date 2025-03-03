@@ -1,16 +1,14 @@
 import Config
 
-
-# to be updated at a later time
+# Configuration sourced from environment variables with fallbacks
 config :gitlab_pipeline,
-  token: "your_default_token",
-  ref: "main",
-  release: "v1.0.0",
-  artifactory_base_url: "https://example.com/artifacts",
-  input_file: "path/to/artifact_list.txt",
-  gitlab_project_id: 123,
-  gitlab_base_url: "https://gitlab.com"
-
+  token: System.get_env("GITLAB_TOKEN"),
+  ref: System.get_env("GITLAB_REF"),
+  release: System.get_env("GITLAB_RELEASE"),
+  artifactory_base_url: System.get_env("ARTIFACTORY_BASE_URL"),
+  input_file: System.get_env("INPUT_FILE"),
+  gitlab_project_id: String.to_integer(System.get_env("GITLAB_PROJECT_ID", "123")),
+  gitlab_base_url: System.get_env("GITLAB_BASE_URL")
 
 env_config = Path.join(__DIR__, "#{config_env()}.exs")
 if File.exists?(env_config) do

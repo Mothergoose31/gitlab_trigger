@@ -12,7 +12,7 @@ defmodule DeployPipeline do
 
   Usage:
   ```
-  # Run the entire pipeline
+  # Run the entire pipeline.
   mix run -e 'DeployPipeline.run()'
 
   # Run a specific step
